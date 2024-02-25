@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <title>IMEI Contract Checker</title>
+  </head>
+  <body>
+    <div class="container">
+        <div class="row">
+            <h1>IMEI Contract Checker</h1>
+            <div class="col md-3">
+                <label for="imei" class="form-label">Enter IMEI:</label>
+                <input type="text" class="form-control md-3" id="imei" placeholder="861536030196099">
+                <br>
+                <button type="button" class="btn btn-primary" onclick="return checkContract()">Check Contract</button>
+                <br>
+            </div>
+        </div>
+        <div id="results"></div>
+    </div>
+    <!-- <h1>IMEI Contract Checker</h1> -->
+    <!-- <form id="imeiForm">
+      <label for="imei">Enter IMEI:</label>
+      <input type="text" id="imei" name="imei" required />
+      <button type="button" onclick="checkContract()">Check Contract</button>
+    </form> -->
+    
+
+    
+
+    <script>
+      var resultJson;
+      function checkContract() {
+        var imei = document.getElementById("imei").value;
+        if(imei == null || imei.trim() == ""){
+            alert("Please enter IMEI Number");
+            return false;
+        }
+        fetch("/check_contract", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            imei: imei,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            data.batelco_response = JSON.parse(data.batelco_response);
+            data.stc_response = JSON.parse(data.stc_response);
+            data.zain_response = JSON.parse(data.zain_response);
+            resultJson = data;
+            reloadData();
+          })
+          .catch((error) => console.error("Error:", error));
+      }
+
+    function reloadData() {
+        var resultsContainer = document.getElementById("results");
+        resultsContainer.innerHTML = ""; // Clear previous content
+
+        // Iterate over each response and create a Bootstrap table for each
+        for (var key in resultJson) {
+            console.log(key);
+          if (resultJson.hasOwnProperty(key)) {
+            var response = resultJson[key];
+
+            // Create a Bootstrap table for each response
+            var table = document.createElement("table");
+            table.className = "table table-bordered";
+
+            // Create header row
+            var headerRow = table.insertRow();
+            for (var prop in response) {
+              if (response.hasOwnProperty(prop)) {
+                var headerCell = headerRow.insertCell();
+                headerCell.innerHTML = `<strong>${prop}</strong>`;
+              }
+            }
+
+            // Create data row
+            var dataRow = table.insertRow();
+            for (var prop in response) {
+              if (response.hasOwnProperty(prop)) {
+                var dataCell = dataRow.insertCell();
+                dataCell.innerHTML = response[prop];
+              }
+            }
+
+            // Add the Bootstrap table and line break to the results container
+            var headerElement = document.createElement('h2');
+            headerElement.innerHTML = formatKey(key);
+            resultsContainer.appendChild(headerElement);
+            resultsContainer.appendChild(table);
+            resultsContainer.appendChild(document.createElement("br"));
+          }
+        }
+    }
+    function formatKey(key) {
+        return key.replace(/_/g, ' ').replace(/\w\S*/g, function (txt) {
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        });
+    }
+    </script>
+  </body>
+</html>
